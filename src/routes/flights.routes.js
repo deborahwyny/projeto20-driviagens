@@ -1,8 +1,7 @@
 import { Router } from "express"
 import { validateSchemma } from "../middlewares/validation.middlewares.js"
 import { flightSchema } from "../schemmas/flights.schemmas.js"
-import { postFlights, postTravels } from "../controllers/flights.controllers.js"
-import { getFlightes } from "../controllers/passengers.controllers.js"
+import { getFlightes, postFlights, postTravels } from "../controllers/flights.controllers.js"
 
 
 const flightRoutes = Router()

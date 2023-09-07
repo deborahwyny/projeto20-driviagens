@@ -1,4 +1,6 @@
 import { db } from "../database/database.connection.js";
+import { passenger } from "../repository/passenger. repository.js";
+import { passengerService } from "../services/passenger.services.js";
 
 
 
@@ -7,14 +9,8 @@ export async function postPassengers(req, res) {
     const {firstName, lastName} = req.body
 
 
-    if (!firstName || !lastName) {return res.status(409)}
-
-
     try{
-
-        const insertPassenger = await db.query('INSERT INTO passengers (firstName, lastName) VALUES ($1, $2);',
-        [firstName, lastName])
-
+        const insertPassenger = await passengerService.passengerPostService(firstName, lastName)
         res.sendStatus(201)
 
     } catch(err){
@@ -24,12 +20,3 @@ export async function postPassengers(req, res) {
 }
 
 
-export async function getFlightes(req, res){
-
-    try{
-
-    } catch(err){
-        res.status(500).send(err.message)
-
-    }
-}

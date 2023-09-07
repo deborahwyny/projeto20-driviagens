@@ -1,4 +1,5 @@
 import { db } from "../database/database.connection.js"
+import { allCities, insertCities } from "../repository/cities.repository.js";
 
 export async function postCities(req, res){
 
@@ -6,11 +7,11 @@ export async function postCities(req, res){
 
     try{
 
-        const cities = await db.query('SELECT * FROM cities WHERE name=$1;', [name])
+        const cities = await allCities(name)
         if (cities.rows.length !== 0) {
             return res.status(409).send("Nome de cidade já existente");
         }
-        await db.query('INSERT INTO cities (name) VALUES ($1);', [name])
+        await insertCities(name)
 
         res.sendStatus(201)
 

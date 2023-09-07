@@ -39,7 +39,7 @@ export async function postFlights(req, res){
 
 export async function postTravels(req, res){
 
-    const {passengerId, flightId} = req.body
+    const { origin, destination, biggerDate, smallerDate } = req.query;
 
     try{
 
@@ -58,5 +58,78 @@ export async function postTravels(req, res){
     } catch(err){
         res.status(500).send(err.message)
 
+    }
+}
+export async function getFlightes(req, res){
+    const { origin, destination, biggerDate, smallerDate } = req.query;
+
+    if (biggerDate && smallerDate && smallerDate > biggerDate) {
+        return res.sendStatus(400); 
+    }
+    try{
+        let query = `
+            SELECT
+                flights.id,
+                origin.name AS origin,
+                destination.name AS destination,
+                date 
+            FROM flights
+            INNER JOIN cities AS origin ON flights.origin = origin.id
+            INNER JOIN cities AS destination ON flights.destination = destination.id
+        `;
+
+        const params = [];
+        if (origin) {
+            query += ' WHERE origin.name = $1'; 
+            params.push(origin);
+        }
+        
+        if (destination) {
+            if (origin) {
+                query += ' AND destination.name = $2'; 
+            } else {
+                query += ' WHERE destination.name = $1'; 
+            }
+            params.push(destination);
+        }
+
+        if (biggerDate && smallerDate) {
+            if (origin || destination) {
+                query += ' AND date BETWEEN $3 AND $4'; 
+            } else {
+                query += ' WHERE date BETWEEN $1 AND $2'; 
+            }
+            params.push(biggerDate, smallerDate);
+        } else if (biggerDate) {
+            if (origin || destination) {
+                query += ' AND date >= $3'; 
+            } else {
+                query += ' WHERE date >= $1'; 
+            }
+            params.push(biggerDate);
+        } else if (smallerDate) {
+            if (origin || destination) {
+                query += ' AND date <= $3'; 
+            } else {
+                query += ' WHERE date <= $1'; 
+            }
+            params.push(smallerDate);
+        }
+
+        query += ' ORDER BY date ASC'; 
+
+        const getFlights = await db.query(query, params);
+
+
+        const flights = getFlights.rows.map(row => ({
+            id: row.id,
+            origin: row.origin,
+            destination: row.destination,
+            date: dayjs(row.date).format('DD-MM-YYYY')
+        }));
+
+        res.send(flights);
+    } catch(err){
+        res.status(500).send(err.message);
     }
 }
