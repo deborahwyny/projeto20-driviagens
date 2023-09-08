@@ -133,3 +133,45 @@ export async function getFlightes(req, res){
         res.status(500).send(err.message);
     }
 }
+
+
+export async function getPassengersTravels(req, res){
+    const { name } = req.query;
+
+    try{
+
+        let filterClause = '';
+
+        if (name) {
+            filterClause = `WHERE CONCAT(passengers.firstName, ' ', passengers.lastName) ILIKE '%${name}%'`;
+        }
+
+        const query = `
+        SELECT
+        passengers.id,
+        CONCAT(passengers.firstName, ' ', passengers.lastName) AS passenger,
+        COUNT(travels.id) AS travels
+    FROM passengers
+    LEFT JOIN travels ON passengers.id = travels.passengerId
+    ${filterClause} 
+    GROUP BY passengers.id
+    ORDER BY travels DESC
+    LIMIT 10;
+
+    `;
+
+    const result = await db.query(query);
+
+    if (result.rows.length > 10) {
+        res.status(500).send("Too many results");
+    } else {
+        const passengersTravels = result.rows.map(row => ({
+            passenger: row.passenger,
+            travels: parseInt(row.travels),
+        }));
+        res.send(passengersTravels);
+    }
+} catch (err) {
+    res.status(500).send(err.message);
+}
+}
