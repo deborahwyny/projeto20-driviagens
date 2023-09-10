@@ -1,5 +1,6 @@
 import { db } from "../database/database.connection.js"
 import { allCities, insertCities } from "../repository/cities.repository.js";
+import { citiesService } from "../services/cities.services.js";
 
 export async function postCities(req, res){
 
@@ -7,12 +8,7 @@ export async function postCities(req, res){
 
     try{
 
-        const cities = await allCities(name)
-        if (cities.rows.length !== 0) {
-            return res.status(409).send("Nome de cidade já existente");
-        }
-        await insertCities(name)
-
+        const cities = await citiesService.postCitiesService(name)
         res.sendStatus(201)
 
     } catch(err){
