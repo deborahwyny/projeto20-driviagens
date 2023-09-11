@@ -1,6 +1,7 @@
 import { db } from "../database/database.connection.js"
 import { allCities, insertCities } from "../repository/cities.repository.js";
 import { citiesService } from "../services/cities.services.js";
+import httpStatus from "http-status"; 
 
 export async function postCities(req, res){
 
@@ -9,9 +10,7 @@ export async function postCities(req, res){
     try{
 
         const cities = await citiesService.postCitiesService(name)
-        res.sendStatus(201)
-
+        res.sendStatus(httpStatus.CREATED)
     } catch(err){
-        res.status(500).send(err.message)
-    }
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err.message);    }
 }

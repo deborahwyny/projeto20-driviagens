@@ -2,6 +2,8 @@ import { db } from "../database/database.connection.js"
 import dayjs from "dayjs"
 import { insertFlightsRepository, postFlightsDestinationRepository, postFlightsRepository } from "../repository/flights.repository.js";
 import { flightsServices } from "../services/flights.services.js";
+import httpStatus from "http-status"; 
+
 
 export async function postFlights(req, res){
 
@@ -10,10 +12,10 @@ export async function postFlights(req, res){
     try{
 
         const insertFlights= await flightsServices.postFlightsService(origin, destination, date)
-        res.sendStatus(201)
+        res.sendStatus(httpStatus.CREATED);
 
     } catch(err){
-        res.status(500).send(err.message)
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err.message);
 
     }
 }
@@ -25,10 +27,10 @@ export async function postTravels(req, res){
     try{
 
         const insertTravels= await flightsServices.postTravelservice(passengerId, flightId)
-        res.sendStatus(201)
+        res.sendStatus(httpStatus.CREATED);
 
     } catch(err){
-        res.status(500).send(err.message)
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err.message);
 
     }
 }
@@ -39,70 +41,23 @@ export async function getFlightes(req, res){
         return res.sendStatus(400); 
     }
     try{
-        let query = `
-            SELECT
-                flights.id,
-                origin.name AS origin,
-                destination.name AS destination,
-                date 
-            FROM flights
-            INNER JOIN cities AS origin ON flights.origin = origin.id
-            INNER JOIN cities AS destination ON flights.destination = destination.id
-        `;
+        const flights = await flightRepository.getFlights({
+            origin,
+            destination,
+            biggerDate,
+            smallerDate,
+        });
 
-        const params = [];
-        if (origin) {
-            query += ' WHERE origin.name = $1'; 
-            params.push(origin);
-        }
-        
-        if (destination) {
-            if (origin) {
-                query += ' AND destination.name = $2'; 
-            } else {
-                query += ' WHERE destination.name = $1'; 
-            }
-            params.push(destination);
-        }
-
-        if (biggerDate && smallerDate) {
-            if (origin || destination) {
-                query += ' AND date BETWEEN $3 AND $4'; 
-            } else {
-                query += ' WHERE date BETWEEN $1 AND $2'; 
-            }
-            params.push(biggerDate, smallerDate);
-        } else if (biggerDate) {
-            if (origin || destination) {
-                query += ' AND date >= $3'; 
-            } else {
-                query += ' WHERE date >= $1'; 
-            }
-            params.push(biggerDate);
-        } else if (smallerDate) {
-            if (origin || destination) {
-                query += ' AND date <= $3'; 
-            } else {
-                query += ' WHERE date <= $1'; 
-            }
-            params.push(smallerDate);
-        }
-
-        query += ' ORDER BY date ASC'; 
-
-        const getFlights = await db.query(query, params);
-
-
-        const flights = getFlights.rows.map(row => ({
+        const formattedFlights = flights.map(row => ({
             id: row.id,
             origin: row.origin,
             destination: row.destination,
-            date: dayjs(row.date).format('DD-MM-YYYY')
+            date: dayjs(row.date).format('DD-MM-YYYY'),
         }));
 
         res.send(flights);
     } catch(err){
-        res.status(500).send(err.message);
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err.message);
     }
 }
 
@@ -144,6 +99,6 @@ export async function getPassengersTravels(req, res){
         res.send(passengersTravels);
     }
 } catch (err) {
-    res.status(500).send(err.message);
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).send(err.message);
 }
 }

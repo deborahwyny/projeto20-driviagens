@@ -4,9 +4,8 @@ async function passengerPostService(firstName, lastName){
 
     
 
-    if (!firstName || !lastName) throw {type: "Conflict", message: " "}
-    // {return res.status(409)} tratamento erro
-
+    if (!firstName || !lastName) 
+    throw { type: "Conflict", message: "Nomes obrigatorios " };
 
     try{
         const insertPassenger = await passenger(firstName, lastName);

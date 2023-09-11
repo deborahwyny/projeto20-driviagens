@@ -38,7 +38,7 @@ async function postFlightsService(origin, destination, date){
     }
 }
 
- async function postTravelservice(passengerId, flightId){
+async function postTravelservice(passengerId, flightId){
 
 
     try{
@@ -59,4 +59,72 @@ async function postFlightsService(origin, destination, date){
     }
 }
 
-export const flightsServices = {postFlightsService, postTravelservice}
+
+async function getFlightesService(origin, destination, biggerDate, smallerDate){
+
+    if (biggerDate && smallerDate && smallerDate > biggerDate) {
+        return res.sendStatus(400); 
+    }
+    try{
+        let query = `
+        SELECT
+            flights.id,
+            origin.name AS origin,
+            destination.name AS destination,
+            date 
+        FROM flights
+        INNER JOIN cities AS origin ON flights.origin = origin.id
+        INNER JOIN cities AS destination ON flights.destination = destination.id
+    `;
+    
+    const params = [];
+
+    if (origin) {
+        query += ' WHERE origin.name = $1';
+        params.push(origin);
+    }
+
+    if (destination) {
+        if (origin) {
+            query += ' AND destination.name = $2';
+        } else {
+            query += ' WHERE destination.name = $1';
+        }
+        params.push(destination);
+    }
+
+    if (biggerDate && smallerDate) {
+        if (origin || destination) {
+            query += ' AND date BETWEEN $3 AND $4';
+        } else {
+            query += ' WHERE date BETWEEN $1 AND $2';
+        }
+        params.push(biggerDate, smallerDate);
+    } else if (biggerDate) {
+        if (origin || destination) {
+            query += ' AND date >= $3';
+        } else {
+            query += ' WHERE date >= $1';
+        }
+        params.push(biggerDate);
+    } else if (smallerDate) {
+        if (origin || destination) {
+            query += ' AND date <= $3';
+        } else {
+            query += ' WHERE date <= $1';
+        }
+        params.push(smallerDate);
+    }
+
+    query += ' ORDER BY date ASC';
+
+    const flights = await db.query(query, params);
+    return flights;
+
+    } catch(err){
+        res.status(500).send(err.message);
+    }
+}
+
+
+export const flightsServices = {postFlightsService, postTravelservice,getFlightesService}
